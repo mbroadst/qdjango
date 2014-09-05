@@ -28,3 +28,16 @@ SOURCES += \
 include(../src.pri)
 headers.path = $$PREFIX/include/qdjango/db
 QMAKE_PKGCONFIG_INCDIR = $$headers.path
+
+odbc-support {
+    DEFINES += QDJANGO_ODBC_SUPPORT
+    unix {
+        DEFINES += UNICODE
+        !contains(LIBS, .*odbc.*) {
+            macx:LIBS += -liodbc
+            else:LIBS += -lodbc
+        }
+    } else {
+        LIBS *= -lodbc32
+    }
+}

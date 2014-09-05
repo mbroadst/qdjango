@@ -26,6 +26,64 @@
 
 #include "QDjango.h"
 
+#if defined(QDJANGO_ODBC_SUPPORT)
+#include <QVarLengthArray>
+#include "sqlext.h"
+
+inline static QString fromSQLTCHAR(const QVarLengthArray<SQLTCHAR> &input, int requestedSize = -1)
+{
+    QString result;
+    int inputSize = qMin(requestedSize, input.size());
+    if (inputSize > 0 && input[inputSize - 1] == 0)
+        inputSize--;
+
+    switch (sizeof(SQLTCHAR)) {
+    case 1:
+        result = QString::fromUtf8((const char*)input.constData(), inputSize);
+        break;
+    case 2:
+        result = QString::fromUtf16((const ushort*)input.constData(), inputSize);
+        break;
+    case 4:
+        result = QString::fromUcs4((const uint*)input.constData(), inputSize);
+        break;
+    default:
+        qCritical("invalid sizeof(SQLTCHAR): %d", int(sizeof(SQLTCHAR)));
+    }
+
+    return result;
+}
+
+QDjangoDatabase::DatabaseType odbcDatabaseType(const QSqlDatabase &db)
+{
+    SQLHANDLE dbHandle = db.driver()->handle().value<SQLHANDLE>();
+    SQLRETURN result;
+    SQLSMALLINT stringLength;
+    QVarLengthArray<SQLTCHAR> databaseRawName(200);
+    memset(databaseRawName.data(), 0, databaseRawName.size() * sizeof(SQLTCHAR));
+
+    result = SQLGetInfo(dbHandle, SQL_DBMS_NAME, databaseRawName.data(),
+                        databaseRawName.size() * sizeof(SQLTCHAR), &stringLength);
+    if (result == SQL_SUCCESS || result == SQL_SUCCESS_WITH_INFO) {
+        QString databaseName;
+#ifdef UNICODE
+        databaseName = fromSQLTCHAR(databaseRawName, stringLength / sizeof(SQLTCHAR));
+#else
+        databaseName = QString::fromUtf8((const char *)databaseRawName.constData(), stringLength);
+#endif
+
+        if (databaseName.contains(QLatin1String("Microsoft SQL Server"), Qt::CaseInsensitive))
+            return QDjangoDatabase::MSSqlServer;
+        else if (databaseName.contains(QLatin1String("MySql"), Qt::CaseInsensitive))
+            return QDjangoDatabase::MySqlServer;
+        else if (databaseName.contains(QLatin1String("PostgreSQL"), Qt::CaseInsensitive))
+            return QDjangoDatabase::PostgreSQL;
+    }
+
+    return QDjangoDatabase::UnknownDB;
+}
+#endif
+
 static const char *connectionPrefix = "_qdjango_";
 
 QMap<QByteArray, QDjangoMetaModel> globalMetaModels = QMap<QByteArray, QDjangoMetaModel>();
@@ -278,5 +336,10 @@ QDjangoDatabase::DatabaseType QDjangoDatabase::databaseType(const QSqlDatabase &
         return QDjangoDatabase::SQLite;
     else if (db.driverName() == QLatin1String("QPSQL"))
         return QDjangoDatabase::PostgreSQL;
+#if defined(QDJANGO_ODBC_SUPPORT)
+    else if (db.driverName() == QLatin1String("QODBC"))
+        return odbcDatabaseType(db);
+#endif
+
     return QDjangoDatabase::UnknownDB;
 }
