@@ -1,4 +1,5 @@
 language: cpp
+cache: apt
 env:
   - QT_SELECT=qt4 CONFIG=shared
   - QT_SELECT=qt4 CONFIG=static
@@ -8,6 +9,9 @@ install:
   - tests/travis/install-build-depends
 before_script:
   - mysql -e 'create database qdjango_test'
+  - mysql -e 'create database qdjango_odbc_test'
   - psql -c 'create database qdjango_test' -U postgres
+  - psql -c 'create database qdjango_odbc_test' -U postgres
+  - psql -c "CREATE USER qdjango WITH UNENCRYPTED PASSWORD 'password';" -U postgres
 script:
   - tests/travis/build-and-test

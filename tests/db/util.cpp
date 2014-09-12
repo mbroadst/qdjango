@@ -16,7 +16,7 @@
  */
 
 #include <cstdlib>
-
+#include <QSqlError>
 #include "QDjango.h"
 
 #include "util.h"
@@ -53,6 +53,7 @@ bool initialiseDatabase()
         QDjango::setDatabase(db);
         return true;
     } else {
+        qDebug() << db.lastError();
         return false;
     }
 }

@@ -14,10 +14,13 @@ qmake $QMAKE_ARGS
 make
 
 # run tests
-QDJANGO_DB_DRIVER=QSQLITE QDJANGO_DB_NAME=:memory: tests/run.py
-QDJANGO_DB_DRIVER=QSQLITE QDJANGO_DB_NAME=/tmp/qdjango_test.db tests/run.py
-QDJANGO_DB_DRIVER=QMYSQL QDJANGO_DB_NAME=qdjango_test QDJANGO_DB_USER=travis tests/run.py
-QDJANGO_DB_DRIVER=QPSQL QDJANGO_DB_NAME=qdjango_test QDJANGO_DB_USER=postgres tests/run.py
+#QDJANGO_DB_DRIVER=QSQLITE QDJANGO_DB_NAME=:memory: tests/run.py
+#QDJANGO_DB_DRIVER=QSQLITE QDJANGO_DB_NAME=/tmp/qdjango_test.db tests/run.py
+#QDJANGO_DB_DRIVER=QMYSQL QDJANGO_DB_NAME=qdjango_test QDJANGO_DB_USER=travis tests/run.py
+#QDJANGO_DB_DRIVER=QPSQL QDJANGO_DB_NAME=qdjango_test QDJANGO_DB_USER=postgres tests/run.py
+QDJANGO_DB_DRIVER=QODBC QDJANGO_DB_NAME="DRIVER={MySQL};SERVER=127.0.0.1;DATABASE=qdjango_odbc_test" QDJANGO_DB_USER=root QDJANGO_DB_PASSWORD="" tests/run.py
+#QDJANGO_DB_DRIVER=QODBC QDJANGO_DB_NAME="DRIVER={PostgreSQL ANSI};SERVER=127.0.0.1;DATABASE=qdjango_odbc_test" QDJANGO_DB_USER=qdjango QDJANGO_DB_PASSWORD=password tests/run.py
+#QDJANGO_DB_DRIVER=QODBC QDJANGO_DB_NAME="DRIVER={PostgreSQL};SERVER=127.0.0.1;DATABASE=qdjango_odbc_test" QDJANGO_DB_USER=qdjango QDJANGO_DB_PASSWORD=password tests/run.py
 exit 0
 
 # generate coverage report
